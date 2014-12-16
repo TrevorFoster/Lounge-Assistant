@@ -5,32 +5,33 @@
     "version": "2.5",
 
     "icons": {
-	"16" : "icon-16.png",
-	"32" : "icon-32.png",
-        "48" : "icon-48.png",
-	"64" : "icon-64.png",
+        "16": "icon-16.png",
+        "32": "icon-32.png",
+        "48": "icon-48.png",
+        "64": "icon-64.png",
         "128": "icon-128.png"
     },
 
-    "content_scripts": [ {
-	"css": [
-	    "css/style.css"
-	],
-	"js": [
-	    "js/lib/jquery.min.js",
-	    "js/lib/jquery.cookie.js",
-	    "js/main.js"
-	],
-	"matches": [ "http://csgolounge.com/*", "http://dota2lounge.com/*"]
-    } ],
+    "content_scripts": [{
+        "css": [
+            "css/style.css"
+        ],
+        "js": [
+            "js/lib/jquery.min.js",
+            "js/lib/jquery.cookie.js",
+            "js/lib/accounting.min.js",
+            "js/main.js"
+        ],
+        "matches": ["http://csgolounge.com/*", "http://dota2lounge.com/*"]
+    }],
 
     "permissions": [
-	"http://steamcommunity.com/*", "https://steamcommunity.com/*", "http://loungeassistant.bi.tk/*",
-	"storage"
+        "http://steamcommunity.com/*", "https://steamcommunity.com/*", "http://loungeassistant.bi.tk/*",
+        "storage"
     ],
 
     "browser_action": {
-	"default_icon": "icon-128.png",
-	"default_popup": "settings.html"
+        "default_icon": "icon-128.png",
+        "default_popup": "settings.html"
     }
 }
