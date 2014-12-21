@@ -1,31 +1,538 @@
 var bumps_url = [];
 var isLogged = $("#logout").length;
 
+var BASEURL = window.location.protocol + "//" + window.location.host + "/"; // are we on csgolounge or dota2lounge
+var APPID = BASEURL.match(/csgo/) ? 730 : 570; // 730 = csgo; 570 = dota2
 
-var version = "2.5";
-var baseUrl = window.location.protocol + "//" + window.location.host + "/";
-var options = self.options;
-var appId = baseUrl.match(/csgo/) ? 730 : 570;
 
-if (typeof chrome == "undefined") {
-    self.on("message", function(msg) {
-        options = msg;
-        setBackground();
+/* Firefox support */
+var FFOptions = self.options;
+/**/
+
+
+//######################################################################
+// USER / SETTINGS
+//######################################################################
+
+
+var User = function() {
+    this.settings = {
+        "currency": 1,
+        "currencyIcon": "$",
+        "background": "http://cdn.steamcommunity.com/economy/image/xJFAJwB220HYP78WfVEW3nzdipZEBtUBDPFsDJm3XnkNmnfcWWqdU3jmo-hbMVhUcciThRFElxkH_HEUmLRffgCeZJxHYo5Rebvv7kJ7RlM7ns3WUUycWwr3MVnT9xsuCJEygx03jFR9-KaxD38bGSSYmodKG81VWaUzWYLqQGwL",
+        "timeFormat": "12h"
+    }
+
+    this.bets = {
+        'win': null,
+        'loss': null,
+        'total': null,
+        'ratio': null
+    };
+};
+
+User.prototype.getSetting = function(name, def) {
+    if (name in this.settings)
+        return this.settings[name];
+    return (typeof def !== 'undefined' ? def : null);
+}
+
+/* local storage abstraction for chrome / firefox */
+User.prototype.loadSettings = function(callback) {
+    var self = this;
+
+    if (typeof chrome == "undefined") { /* Firefox */
+        if (typeof FFOptions["settings"] !== 'undefined')
+            $.extend(self.settings, JSON.parse(FFOptions["settings"]));
+        callback(self);
+    } else { /* Chrome */
+        chrome.storage.local.get("settings", function(data) {
+            if (typeof data["settings"] !== 'undefined')
+                $.extend(self.settings, JSON.parse(data["settings"]));
+            callback(self);
+        });
+    }
+}
+
+
+//######################################################################
+// BasePage
+//######################################################################
+
+var BasePage = function(user) {
+    this.user = user;
+    this.path = window.location.pathname;
+}
+
+
+BasePage.prototype.getPage = function() {
+    switch (this.path) {
+        case "/match":
+            return new MatchPage(this.user);
+            break;
+        case "/trade":
+            return new TradePage(this.user);
+            break;
+        case "/myprofile":
+            return new ProfilePage(this.user);
+            break;
+        case "/":
+            return new MainPage(this.user);
+            break;
+        default:
+            return new BasePage(this.user);
+            break;
+    }
+}
+
+
+BasePage.prototype.addMenu = function() {
+    $("#submenu").prepend($("<div>").attr("class", "la-hide-div").append($("<span>").attr("class", "la-hide-menu").text("<\n<")));
+    $("#submenu>nav").eq(0)
+        .append($("<a>").text("Trades : Not logged in").attr({
+            "id": "la-trade",
+            "title": "Bump all"
+        }))
+        .append($("<a>").text("Won : Not logged in").attr("id", "la-winloose"))
+        .append($("<a>").text("Infinite trade list").attr("href", "/trades"));
+
+    $(".la-hide-div").click(function() {
+        $("#submenu").toggleClass("la-display-menu");
+        $("#main, main").toggleClass("la-display-menu");
+    });
+}
+BasePage.prototype.displayBetHistory = function() {
+    $.get(BASEURL + "/ajax/betHistory.php", function(data) {
+        $("main").html($("<section>").attr({
+            "style": "margin-left: 40px;",
+            "class": "box boxhistory"
+        }).html(data)); // retreive the user bet history from profile page and publish it in the current page
     });
 }
 
-var storage = {
-    get: function(name, callback) {
-        if (typeof chrome == "undefined") {
-            callback(options[name]);
-        } else {
-            chrome.storage.local.get(name, function(data) {
-                callback(data[name]);
-            });
+
+BasePage.prototype.setBackground = function(img) {
+    document.body.style.cssText = "background-image: url(" + img + ") !important; background-attachment: fixed; background-repeat: no-repeat;";
+}
+
+BasePage.prototype.updateWinLoss = function() {
+    var self = this;
+
+    $("#la-winloose").text("Loading ...");
+    $.get(BASEURL + "/ajax/betHistory.php", function(data) {
+        var won = $(data).find(".won").length;
+        var lost = $(data).find(".lost").length;
+        var total = won + lost;
+        var winPercent = Math.floor(won / total * 100);
+        var winclass = "";
+        if (total == 0) {
+            $("#la-winloose").attr('class', winclass).text("Won : no bet found");
+            return;
         }
+        if (winPercent < 50) winclass = "loosing";
+        else if (winPercent > 50) winclass = "winning";
+        $("#la-winloose").attr('class', winclass).text("Won : ")
+            .append($("<b>").text(winPercent + "%"))
+            .append(" " + won + " / " + total);
+    });
+
+    $("#la-winloose").click(function() {
+        self.displayBetHistory();
+    })
+};
+
+
+BasePage.prototype.updateBotStatus = function() {
+    $.get(BASEURL + "/status", function(data) {
+        var status = $(data).find("tr").eq(1).find("td");
+        var msg = "Bots status "
+        var src = "";
+
+        $.each(status, function(idx, status) {
+            switch ($(status).attr("bgcolor")) {
+                case '#76EE00':
+                    src = "/img/online.svg";
+                    break;
+                case '#FFA500':
+                    src = "/img/unstable.svg";
+                    break;
+                case '#FF0000':
+                default:
+                    src = "/img/offline.svg";
+                    break;
+            }
+            msg += '<abbr class="la-bot-status" title="' + $(status).text() + '"><img class="botstatus" src="' + src + '"></a>';
+        });
+        $("#submenu>div>a").eq(isLogged + 4).html(msg); // publish the img list generated above
+    });
+}
+
+BasePage.prototype.updateItems = function() {
+    var self = this;
+    $.each($(".item"), function(idx, data) {
+        var item = new Item($(data));
+        item.updateRarity();
+    });
+
+
+    $(document).unbind("mouseenter");
+    $(document).on("mouseenter", ".item", function() {
+        var item = new Item($(this));
+        item.updatePrice();
+    });
+}
+
+BasePage.prototype._init = function() {
+    this.addMenu();
+    this.setBackground(this.user.getSetting("background"));
+    this.updateItems();
+    this.updateBotStatus();
+    this.updateWinLoss();
+}
+
+BasePage.prototype.init = function() {
+    this._init();
+}
+
+
+//######################################################################
+// MainPage
+//######################################################################
+
+var MainPage = function(user) {
+    this.user = user;
+};
+
+
+MainPage.prototype = new BasePage();
+MainPage.prototype.constructor = MainPage;
+
+MainPage.prototype.addMinimizeButton = function() {
+    $("#bets").prepend($("<a>").attr({
+        "class": "la-maximize-all"
+    }).text("+"));
+    $("#bets").prepend($("<a>").attr({
+        "class": "la-minimize-all"
+    }).text("-"));
+
+    $(".la-minimize-all").click(function() {
+        $.each($(".matchmain"), function(idx, content) {
+            window.setTimeout(function() {
+                var match = new Match($(content));
+                match.minimize();
+            }, idx * 50);
+        });
+    });
+    $(".la-maximize-all").click(function() {
+        $.each($(".matchmain"), function(idx, content) {
+            window.setTimeout(function() {
+                var match = new Match($(content));
+                match.maximize();
+            }, idx * 50);
+        });
+    });
+}
+
+
+MainPage.prototype.init = function() {
+    this._init();
+    this.addMinimizeButton();
+
+    $.each($(".matchmain"), function(idx, data) {
+        var match = new Match($(data));
+        match.load();
+    });
+
+    $(".matchmain").on("mouseenter", function() {
+        var match = new Match($(this));
+        match.update();
+    });
+
+}
+
+//######################################################################
+// MatchPage
+//######################################################################
+
+
+var MatchPage = function(user) {
+    this.user = user;
+};
+
+
+MatchPage.prototype = new BasePage();
+MatchPage.prototype.constructor = MatchPage;
+
+
+MatchPage.prototype.addTime = function() {
+    var dt = new Date();
+    var tzOffset = (dt.getTimezoneOffset() / 60) + 2;
+    var timeDiv = $(".box-shiny-alt .half").eq(2);
+    console.log(timeDiv.text());
+    var CEST = timeDiv.text();
+    var AMorPM = "";
+
+    hour = (CEST.match(/(\d{2}):(\d{2})/)[1] - tzOffset) % 24;
+    minute = CEST.match(/(\d{2}):(\d{2})/)[2];
+
+    if (hour < 0) hour = 24 + hour;
+    if (user.getSetting("timeFormat") == "12h")
+        if (hour == 12) {
+            AMorPM = " PM";
+        } else if (hour > 12) {
+        hour = hour - 12;
+        AMorPM = " PM";
+    } else {
+        AMorPM = " AM";
+    }
+
+    hour = hour < 10 ? "0" + hour : hour;
+    timeDiv.text(" " + hour + ":" + minute + AMorPM + " Local / " + timeDiv.text());
+}
+
+MatchPage.prototype.showMsg = function(msg) {
+    $("#la-submitmsg").text(msg).show().delay(5000).fadeOut(4000);
+}
+
+MatchPage.prototype.placeNewBet = function(match, tlss) {
+    var self = this
+    if (!$('#on').val()) {
+        self.showMsg("You didn't select a team.");
+        return;
+    }
+    if ($('.left').children().size() > 0) {
+        $.ajax({
+            type: "POST",
+            url: "ajax/postBet.php",
+            data: $("#betpoll").serialize() + "&match=" + match + "&tlss=" + tlss,
+            success: function(data) {
+                if (data) {
+                    self.showMsg(data);
+                } else {
+                    window.location.href = "/mybets";
+                }
+            }
+        });
+    } else {
+        self.showMsg("You didn't pick any items.");
+    }
+}
+
+MatchPage.prototype.addItemsBet = function(match, tlss) {
+    var self = this;
+    if ($('.left').children().size() > 0) {
+        $.ajax({
+            type: "POST",
+            url: "ajax/addItemsBet.php",
+            data: $("#betpoll").serialize() + "&match=" + match + "&tlss=" + tlss,
+            success: function(data) {
+                if (data) {
+                    $("#placebut").show();
+                    self.showMsg(data);
+                } else {
+                    window.location.href = "/mybets";
+                }
+            }
+        });
+    }
+
+}
+
+MatchPage.prototype.trySubmit = function() {
+    if ($("#autoplace").is(":checked")) {
+        var match = $("#placebut").attr("onclick").match(/(placeBetNew|addItemsBet)\('(\d+)', '([a-f0-9]{32})'\)/);
+        if (match[1] == "placeBetNew") {
+            var matchid = match[2];
+            var tlss = match[3];
+            this.placeNewBet(matchid, tlss);
+        } else {
+            var matchid = match[2];
+            var tlss = match[3];
+            this.addItemsBet(matchid, tlss);
+        }
+        window.setTimeout(this.trySubmit, 10000);
     }
 };
 
+MatchPage.prototype.addAutoSubmit = function() {
+    var self = this;
+    var button = $("#placebut");
+    if (button.length) {
+        button.after(
+            $("<label>").attr("class", "autoplace").text("Auto Submit ")
+            .append($("<input>").attr({
+                "type": "checkbox",
+                "id": "autoplace"
+            }))
+            .append($("<div>").attr("id", "la-submitmsg")));
+        $("#autoplace").on("change", function() {
+            self.trySubmit();
+        });
+    }
+}
+
+MatchPage.prototype.updateAllValue = function() {
+    var totalValue = 0.0;
+
+    var itemsCount = {
+        'Covert': 0.0,
+        'Classified': 0.0,
+        'Restricted': 0.0,
+        'Mil-Spec': 0.0,
+        'Industrial': 0.0,
+        'Consumer': 0.0,
+        'Other': 0.0
+    };
+
+    if ($("#backpack").length && $(".la-total-value-div").length == 0) {
+        $("#backpack > .oitm > .item").each(function() {
+            var type = $(this).children("div.rarity")[0].classList[1];
+            var value = parseFloat($(this).children("div.value")[0].innerHTML.replace("$ ", ""));
+
+            if (type in itemsCount)
+                itemsCount[type] += value;
+            else
+                itemsCount['Other'] += value;
+            totalValue += value;
+        });
+
+        var totalValue = totalValue.toFixed(2);
+        var small = (.05 * totalValue).toFixed(2);
+        var medium = (.1 * totalValue).toFixed(2);
+        var large = (.2 * totalValue).toFixed(2);
+
+        $(".bpheader").after(
+            $("<div>").attr("class", "la-total-value-div")
+            .append($("<div>").attr("class", "la-total-value").text("Your items are worth: $")
+                .append($("<strong>")).append(totalValue))
+            .append($("<table>").attr("class", "la-total-value-items"))
+            .append($("<table>").attr("class", "la-total-value-betsize")
+                .append($("<tr>")
+                    .append($("<td>").text("Small bet : $" + small))
+                    .append($("<td>").text("Medium bet : $" + medium))
+                    .append($("<td>").text("Large bet : $" + large))
+                )
+            )
+        );
+
+        var idx = 0;
+        $.each(itemsCount, function(key, value) {
+            if (idx % 2 == 0) $(".la-total-value-items").append($("<tr>"));
+
+            $(".la-total-value-items tr:last-child").append($("<td>").append(
+                $("<b>").css("color", colors[key]).text(key)
+            ).append(" : $" + value.toFixed(2)));
+
+            idx++;
+        });
+    }
+};
+
+MatchPage.prototype.init = function() {
+    this._init();
+    this.addTime();
+    this.addAutoSubmit();
+    $("#placebut").after($("<a>").text("All Value").attr("class", "buttonright la-value-button"));
+    $(".la-value-button").click(this.updateAllValue);
+}
+
+//######################################################################
+// ProfilePage
+//######################################################################
+
+var ProfilePage = function(user) {
+    this.user = user;
+}
+
+ProfilePage.prototype = new BasePage();
+ProfilePage.prototype.constructor = ProfilePage;
+
+ProfilePage.prototype.addTotals = function() {
+    var winTot = 0.0,
+        lossTot = 0.0,
+        betTot = 0.0;
+
+    var profile = $("#profile .box-shiny-alt div:eq(0)");
+    profile.append("Won: <span id='winnings' style='color:green'></span><br>Lost: <span id='losses' style='color:red'></span><br>Total placed: <span id='placed'></span><br>");
+
+    var icon = user.getSetting("currencyIcon");
+    console.log(icon);
+    var decsep = ".",
+        thousep = ",";
+
+    if (icon === "€") {
+        decsep = ",";
+        thousep = "."
+    }
+
+    $.get(BASEURL + "/ajax/betHistory.php", function(data) {
+        $(data).find("tr:not([class^='details'])").each(function() {
+            var won = $(this).find(".won").length > 0;
+
+            $(this).next().find(".item").each(function() {
+                getPrice(new Item($(this)), function(price) {
+                    if (!price) return;
+                    price = price.replace(/\&\#?.+;/g, "");
+
+                    var real = accounting.unformat(price, decsep);
+
+                    betTot += real;
+                    if (!won) {
+                        lossTot += real;
+                    }
+                    profile.find("#losses").html(accounting.formatMoney(lossTot, icon, 2, thousep, decsep));
+                    profile.find("#placed").html(accounting.formatMoney(betTot, icon, 2, thousep, decsep));
+                });
+            });
+
+            if (won) {
+                $(this).next().next().find(".item").each(function() {
+                    getPrice(new Item($(this)), function(price) {
+                        if (!price) return;
+                        price = price.replace(/\&\#?.+;/g, "");
+                        var real = accounting.unformat(price, decsep);
+
+                        winTot += real;
+                        profile.find("#winnings").html(accounting.formatMoney(winTot, icon, 2, thousep, decsep));
+                    });
+                });
+            }
+        });
+    });
+}
+
+
+ProfilePage.prototype.init = function() {
+    this._init();
+    this.addTotals();
+}
+
+
+//######################################################################
+// TradePage
+//######################################################################
+
+var TradePage = function(user) {
+    this.user = user;
+}
+
+TradePage.prototype = new BasePage();
+TradePage.prototype.constructor = TradePage;
+
+
+TradePage.prototype.init = function() {
+    this._init();
+
+    var steamid = $(".profilesmallheader>a").attr("href").match(/\d+/)[0];
+    $(".profilesmallheader").append(
+        $("<a>").attr("href", "http://steamcommunity.com/profiles/" + steamid + "/inventory").text("Inventory")
+    );
+
+}
+
+//######################################################################
+// ITEMS
+//######################################################################
 
 var colors = {
     "Base": "#B0C3D9",
@@ -52,234 +559,277 @@ var colors = {
 }
 
 
+var specialItems = [" + More",
+    "Any Ancient",
+    "Any Common",
+    "Any Immortal",
+    "Any Key",
+    "Any Legendary",
+    "Any Mythical",
+    "Any Offers",
+    "Any Rare",
+    "Any Set",
+    "Any Uncommon",
+    "Dota Items",
+    "Gift",
+    "Knife",
+    "Offers",
+    "Real Money",
+    "Real Money",
+    "TF2 Items",
+    "Undefined / Not Tradeable"
+];
+
 var PriceList = {};
 
-//######################################################################
-// ITEMS
-//######################################################################
-
-function addJs(func) {
-    var script = document.createElement('script');
-    script.setAttribute("type", "application/javascript");
-    script.textContent = func;
-    document.body.appendChild(script);
+var quality = {
+    "Field-Tested": "FT",
+    "Minimal Wear": "MW",
+    "Battle-Scarred": "BS",
+    "Well-Worn": "WW",
+    "Factory New": "FN",
 }
 
-function GetPrice(itemName, callback) {
-    if (itemName in PriceList) {
-        callback(PriceList[itemName]);
+var Item = function(item) {
+    var self = this;
+    this.item = item;
+    this.name = $('.smallimg', item).attr('alt');
+    this.rarity = $('.rarity', item).attr('class').replace('rarity ', '');
+    this.quality = $.trim($('.rarity', item).text());
+};
+
+Item.prototype.getColor = function() {
+    if (this.rarity in colors) {
+        return colors[this.rarity];
+    }
+    return null
+};
+
+Item.prototype.isSpecial = function() {
+    return (specialItems.indexOf(this.name) > 0);
+};
+
+
+Item.prototype.getMiniQuality = function() {
+    if (this.quality in quality)
+        return quality[this.quality];
+    return null;
+};
+
+Item.prototype.updatePrice = function() {
+    var self = this;
+    if (this.isSpecial())
+        return;
+
+    if (this.needQuality())
+        this.item.prepend($("<div>").attr({
+            "class": "la-clreff"
+        }).text(quality[this.quality]));
+
+    if (this.name in PriceList) {
+        $(".rarity", self.item).text(PriceList[this.name]);
         return;
     }
 
-    storage.get("currency", function(currency) {
-        $.getJSON("http://steamcommunity.com/market/priceoverview/?currency=" + currency + "&appid=" + appId + "&market_hash_name=" + itemName, function(json) {
-            var price = "Not found";
-            if (json.success) {
-                if (typeof json.lowest_price != 'undefined')
-                    price = json.lowest_price;
-                else if (typeof json.median_price != 'undefined')
-                    price = json.median_price;
-            }
-            PriceList[itemName] = price;
-            callback(price);
-        }).fail(function() {
-            callback(null);
-        });
-    });
-}
-
-
-function UpdateItem() {
-    $.each($(".item"), function(idx, data) {
-        var rarityDiv = $(data).find(".rarity");
-        var rarity = rarityDiv.attr('class').replace("rarity ", "");
-        var itemName = $(data).find(".smallimg").attr("alt");
-
-        if (rarityDiv.text().match(/^\s+$/))
-            rarityDiv.text("-");
-
-
-        if (itemName.match(/(Any Offers)|(Any Key)|(^\s+Knife\s+$)|(Real Money)|(Dota Items)|(TF2 Items)|(Any Key)/)) {
-            $(data).find(".rarity").css({
-                "visibility": "hidden",
-            });
-            return 1;
-        }
-        if (rarity in colors) {
-            $(data).find(".rarity").css({
-                "background-color": colors[rarity],
-            });
-        }
+    $(".rarity", self.item).text("Loading...");
+    getPrice(this, function(price) {
+        price = (price) ? price : "Not found";
+        $(".rarity", self.item).text(price);
     });
 
-    $("div.item").unbind("mouseenter");
+    this.item.parents(".oitm").unbind("mouseenter");
+};
 
-    $("div.item").bind("mouseenter", function(evt) {
+Item.prototype.needStar = function() {
+    if (this.item.hasClass("Star") && $(".clreff", this.item).length < 1)
+        return true;
+    return false;
+};
 
-        if ($(this).hasClass("priced"))
-            return;
+Item.prototype.needQuality = function() {
+    if (this.quality in quality && $(".la-clreff", this.item).length < 1)
+        return true;
+    return false;
+};
 
-        var itemName = $(this).find(".smallimg").first().attr("alt");
-
-        if (itemName in PriceList) {
-            $(this).find(".rarity").html(PriceList[itemName]);
-            return;
-        }
-        $(this).find(".rarity").html("Loading ...");
-
-        var item = $(this);
-
-        GetPrice(itemName, function(price) {
-            if (!price) price = "Not Found";
-
-            item.find(".rarity").html(price);
-            item.addClass("priced")
-        });
-    });
-
-    observer.disconnect();
-    $(".item.Star:not(:has(>.clreff))").prepend($("<div>").attr({
-        "class": "clreff",
-        "style": "background-color: #8650AC"
-    }).text("★"));
-    startObserver();
-
-
-    if (appId == 730) // Only for Csgo
-    {
-        $(".rarity").unbind("click");
-        $(".rarity").click(function(e) {
-            var newSrc = $(this).parent().find("img").attr("src").replace("99fx66f", "512fx388f");
-            var newLink = $(this).parent().find("a")[1].href;
-            $("#modalImg").attr("src", newSrc);
-            $("#modalMarket").attr("href", newLink);
-            $("#modalPreview").fadeIn("fast");
-        });
-
-        $('.rarity').unbind("mouseenter mouseleave");
-        $('.rarity').hover(
-            function() {
-                var $this = $(this); // caching $(this)
-                $this.data('initialText', $this.text());
-                $this.text("Preview");
-            },
-            function() {
-                var $this = $(this); // caching $(this)
-                $this.text($this.data('initialText'));
-            }
-        );
+Item.prototype.updateRarity = function() {
+    if (this.isSpecial()) {
+        $('.rarity', this.item).css({
+            "visibility": "hidden"
+        })
     }
+
+    if (color = this.getColor()) {
+        $('.rarity', this.item).css({
+            "background-color": color
+        })
+    }
+
+    if (this.quality == "")
+        $(".rarity", this.item).text("-");
+
+    if (this.needStar())
+        this.item.prepend($("<div>").attr({
+            "class": "clreff",
+            "style": "background-color: #8650AC"
+        }).text("★"));
+
 }
 
 
-var observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-        var newNodes = mutation.addedNodes;
-        if (newNodes !== null && newNodes.length > 0) {
-            $.each(newNodes, function(idx, n) {
-                if (n.nodeName != "#text") {
-                    UpdateItem();
-                    return false;
-                }
-            });
+Item.prototype.getApiUrl = function() {
+    return "http://steamcommunity.com/market/priceoverview/?currency=" + user.getSetting('currency') + "&appid=" + APPID + "&market_hash_name=" + this.name;
+}
+
+//######################################################################
+// MATCHES
+//######################################################################
+
+var Match = function(match) {
+    this.match = match;
+    this.url = BASEURL + $("a", this.match).last().attr("href");
+    this.teams = [{
+        "name": $(".teamtext>b", this.match).eq(0).text(),
+        "odds": $(".teamtext>i", this.match).eq(0).text(),
+        "win": $(".team", this.match).eq(0).find("img").length
+    }, {
+        "name": $(".teamtext>b", this.match).eq(1).text(),
+        "odds": $(".teamtext>i", this.match).eq(1).text(),
+        "win": $(".team", this.match).eq(1).find("img").length
+    }];
+    this.time = $(".whenm", this.match).eq(0).text();
+}
+
+Match.prototype.minimize = function() {
+    var self = this;
+    $('.la-minimize-match', this.match).text("+");
+    $(".match", this.match).fadeOut(400, "swing", function() {
+        $(".la-match-info", self.match).fadeIn();
+    });
+}
+
+Match.prototype.maximize = function() {
+    var self = this;
+    $('.la-minimize-match', this.match).text("-");
+    $(".la-match-info", this.match).fadeOut(400, "swing", function() {
+        $(".match", self.match).fadeIn();
+    });
+}
+
+Match.prototype.toggle = function() {
+    if ($('.la-minimize-match', this.match).text() == "-")
+        this.minimize();
+    else
+        this.maximize();
+};
+
+Match.prototype.update = function() {
+    var self = this;
+    $.get(self.url, function(data) {
+        // Set "best of #"
+        var bo = $(data).find(".half").eq(1).html();
+
+        $('.matchleft>a>div', self.match).eq(1).attr({
+            'class': 'la-bo'
+        }).text(bo);
+
+        // Set time in current Timezone
+        var dt = new Date();
+        var tzOffset = (dt.getTimezoneOffset() / 60) + 2;
+        var CEST = $(data).find(".box-shiny-alt .half").eq(2).text();
+        var AMorPM = "";
+
+        hour = (CEST.match(/(\d{2}):(\d{2})/)[1] - tzOffset) % 24;
+        minute = CEST.match(/(\d{2}):(\d{2})/)[2];
+        if (hour < 0) hour = 24 + hour;
+        if (user.getSetting("timeFormat") == "12h")
+            if (hour == 12) {
+                AMorPM = " PM";
+            } else if (hour > 12) {
+            hour = hour - 12;
+            AMorPM = " PM";
+        } else {
+            AMorPM = " AM";
         }
-    });
-});
 
-function startObserver() {
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        characterData: true
+        hour = hour < 10 ? "0" + hour : hour;
+        $(".la-time-match", self.match).text(" ( " + hour + ":" + minute + AMorPM + " )");
     });
+    this.match.unbind("mouseenter");
 }
 
-function setBackground() {
-    storage.get("background", function(background) {
-        document.body.style.cssText = "background-image: url(" + background + ") !important";
+Match.prototype.load = function() {
+    var self = this;
+    $(".matchheader>.whenm:first-child", this.match).prepend($("<a>").attr({
+        "class": "la-minimize-match"
+    }).text("-"));
+    $(".matchheader>.whenm:first-child", this.match).append($("<span>").attr({
+        "class": "la-time-match"
+    }));
+    $(".matchheader>.whenm:first-child", this.match).append($("<div>").attr({
+        "class": "la-match-info"
+    }).hide());
+
+    var wins = [
+        (this.teams[0].win ? $("<img>").attr({
+            "height": "20px",
+            "src": "/img/won.png"
+        }) : null), (this.teams[1].win ? $("<img>").attr({
+            "height": "20px",
+            "src": "/img/won.png"
+        }) : null),
+    ];
+
+
+    $(".la-match-info", this.match)
+        .append(
+            $("<b>").append(this.teams[0].name).append(wins[0])
+        )
+        .append($("<i>").text(this.teams[0].odds))
+        .append($("<span>").attr('class', 'la-vs').text("vs"))
+        .append($("<i>").text(this.teams[1].odds))
+        .append(
+            $("<b>").append(this.teams[1].name).append(wins[1])
+        );
+
+
+    $(".la-minimize-match", this.match).click(function() {
+        self.toggle();
     });
+
+    $('.matchleft>a>div', this.match).eq(1).attr({
+        'class': 'la-bo'
+    }).text('-');
 }
 
-function addMenu() {
-    $("#submenu").prepend($("<div>").attr("class", "la-hide-div").append($("<span>").attr("class", "la-hide-menu").html("<<br><")));
+// ################################################################################
 
-    $("#submenu>div").eq(1).css("margin-top", "-50px")
-        .append($("<a>").html("Trades : Not logged in").attr({
-            "id": "la-trade",
-            "title": "Bump all"
-        }))
-        .append($("<a>").html("Won : Not logged in").attr("id", "la-winloose"))
-        .append($("<a>").html("Infinite trade list").attr("href", "/trades"));
+function getPrice(item, callback) {
+    if (item.name in PriceList) {
+        callback(PriceList[item.name]);
+        return;
+    }
 
-    $(".la-hide-div").click(function() {
-        $("#submenu").toggleClass("la-display-menu");
-        $("#main, main").toggleClass("la-display-menu");
-    });
-}
-
-function displayBotStatus() {
-    $.get(baseUrl + "/status", function(data) {
-        var status = $(data).find("tr").eq(1).find("td");
-        var msg = "Bots status "
-        var src = "";
-
-        $.each(status, function(idx, status) {
-            switch ($(status).attr("bgcolor")) {
-                case '#76EE00':
-                    src = "http://loungeassistant.bi.tk/online.svg?" + version;
-                    break;
-                case '#FFA500':
-                    src = "http://loungeassistant.bi.tk/unstable.svg?" + version;
-                    break;
-                case '#FF0000':
-                default:
-                    src = "http://loungeassistant.bi.tk/offline.svg?" + version;
-                    break;
-            }
-            msg += '<abbr class="la-bot-status" title="' + $(status).text() + '"><img class="botstatus" src="' + src + '"></a>';
-        });
-        $("#submenu>div>a").eq(isLogged + 4).html(msg);
-    });
-}
-
-function displayBetHistory(clearMain) {
-    clearMain = typeof clearMain !== 'undefined' ? clearMain : false;
-
-    $.get(baseUrl + "/ajax/betHistory.php", function(data) {
-        if (clearMain)
-            $("#main").html($("<section>").attr("class", "box boxhistory").html(data));
-        else
-            $("#main").append($("<section>").attr("class", "box boxhistory").html(data));
-    });
-}
-
-function winLoss() {
-    $("#la-winloose").text("Loading ...");
-    $.get(baseUrl + "/ajax/betHistory.php", function(data) {
-        var won = $(data).find(".won").length;
-        var lost = $(data).find(".lost").length;
-        var total = won + lost;
-        var winPercent = Math.floor(won / total * 100);
-        var winclass = "";
-        if (total == 0) {
-            $("#la-winloose").attr('class', winclass).html("Won : no bet found");
-            return;
+    $.getJSON(item.getApiUrl(), function(json) {
+        var price = null;
+        if (json.success) {
+            if (typeof json.lowest_price != 'undefined')
+                price = json.lowest_price;
+            else if (typeof json.median_price != 'undefined')
+                price = json.median_price;
         }
-        if (winPercent < 50) winclass = "loosing";
-        else if (winPercent > 50) winclass = "winning";
-        $("#la-winloose").attr('class', winclass).html("Won : <b>" + winPercent + "%</b> (" + won + " / " + total + ")");
+        price = $.parseHTML(price)[0].data; // Using parseHTML to avoid xss from steam ><
+        PriceList[self.name] = price;
+        callback(price);
+    }).fail(function() {
+        callback(null);
     });
-
-    $("#la-winloose").click(function() {
-        displayBetHistory(true);
-    })
 }
-
 
 function updateTrade() {
     $("#la-trade").text("Loading ...");
 
-    $.get(baseUrl + "/mytrades", function(data) {
+    $.get(BASEURL + "/mytrades", function(data) {
         var tradesnb = $(data).find(".tradeheader").length;
 
         $.each($(data).find(".tradeheader>.buttonright"), function(idx, item) {
@@ -307,7 +857,7 @@ function trade() {
         $.each(bumps_url, function(idx, trade) {
             $.ajax({
                 type: "POST",
-                url: baseUrl + "/ajax/bumpTrade.php",
+                url: BASEURL + "/ajax/bumpTrade.php",
                 data: "trade=" + trade
             });
         });
@@ -317,341 +867,56 @@ function trade() {
     });
 }
 
-function replaceAlert() {
-    addJs('function alert(msg){$("#submitmsg").html(msg).show().delay(5000).fadeOut(4000);}');
-}
-
-function trySubmit() {
-    replaceAlert();
-    if ($("#autoplace").is(":checked")) {
-        location.assign("javascript:" + $("#placebut").attr("onclick").split(";")[1]);
-        window.setTimeout(trySubmit, 10000);
-    }
-}
-
-function addAutoSubmit() {
-    var button = $("#placebut");
-    if (button.length) {
-        button.after(
-            $("<label>").attr("class", "autoplace").text("Auto Submit ")
-            .append($("<input>").attr({
-                "type": "checkbox",
-                "id": "autoplace"
-            }))
-            .append($("<div>").attr("id", "submitmsg")));
-
-        $("#autoplace").on("change", function() {
-            trySubmit();
-        });
-    }
-}
-
-function addInventoryLink() {
-    if ($(".profilesmallheader>a").length < 1 || !isLogged)
-        return;
-    var steamid = $(".profilesmallheader>a").attr("href").match(/\d+/)[0];
-    $(".profilesmallheader").append($("<a>").attr("href", "http://steamcommunity.com/profiles/" + steamid + "/inventory").text("Inventory"));
-}
-
-function addMinimizeButton() {
-    $("#bets").prepend($("<a>").attr({
-        "class": "la-maximize-all"
-    }).text("+"));
-    $("#bets").prepend($("<a>").attr({
-        "class": "la-minimize-all"
-    }).text("-"));
-
-    $(".matchheader>.whenm:first-child").prepend($("<a>").attr({
-        "class": "la-minimize-match"
-    }).text("-"));
-    $(".matchheader>.whenm:first-child").append($("<span>").attr({
-        "class": "la-time-match"
-    }));
-    $(".matchheader>.whenm:first-child").append($("<div>").attr({
-        "class": "la-match-info"
-    }).hide());
-
-    $(".la-minimize-match").click(function() {
-        $(this).text($(this).text() == "+" ? "-" : "+");
-        var matchmain = $(this).parents(".matchmain");
-        var teams = [{
-            "name": matchmain.find(".teamtext>b").eq(0).text(),
-            "rate": matchmain.find(".teamtext>i").eq(0).text(),
-            "win": matchmain.find(".teamtext").eq(0).prev().find("img").length
-        }, {
-            "name": matchmain.find(".teamtext>b").eq(1).text(),
-            "rate": matchmain.find(".teamtext>i").eq(1).text(),
-            "win": matchmain.find(".teamtext").eq(1).prev().find("img").length
-        }];
-
-        matchmain.find(".la-match-info").html("<b>" + teams[0].name + (teams[0].win ? "<img height='20px' src='/img/won.png'>" : "") + "</b> <i>" + teams[0].rate + "</i><span class='la-vs'> vs </span><b>" + teams[1].name + (teams[1].win ? "<img height='20px' src='/img/won.png'>" : "") + "</b><i> " + teams[1].rate + "</i>");
-
-        if ($(this).text() == "+") {
-            matchmain.find(".match").fadeOut(400, "swing", function() {
-                matchmain.find(".la-match-info").fadeIn();
-            });
-        } else {
-            matchmain.find(".la-match-info").fadeOut(400, "swing", function() {
-                matchmain.find(".match").fadeIn();
-            });
-        }
-    });
-
-    $(".la-minimize-all").click(function() {
-        $.each($(".la-minimize-match"), function(idx, content) {
-            if ($(content).text() == "-")
-                setTimeout(function() {
-                    $(content).click()
-                }, idx * 100)
-        })
-    });
-    $(".la-maximize-all").click(function() {
-        $.each($(".la-minimize-match"), function(idx, content) {
-            if ($(content).text() == "+")
-                setTimeout(function() {
-                    $(content).click()
-                }, idx * 100)
-        })
-    });
-}
 
 
-$("#modalPreview").append($("<a>").attr({
-    'id': 'modalMarket',
-    'class': 'button',
-    'href': '#'
-}).text('Market'));
 
-
-$(".match").on('mouseenter', function() {
-    var elem = $(this);
-    var matchurl = elem.find("a").first().attr("href");
-    $(elem.find(".matchleft>a>div")[1]).attr({
-        "class": "la-bof"
-    }).html('-');
-
-    $.get(baseUrl + matchurl, function(data) {
-        var bof = $($(data).find(".half")[1]).html();
-        $(elem.find(".matchleft>a>div")[1]).attr({
-            "class": "la-bof"
-        }).html(bof);
-        elem.unbind('mouseenter');
-    });
-
-});
-
-
-function addTime() {
-    /*
-      Original code/idea by jhubbardsf
-     */
-
-    var $box = $('.gradient').first(),
-        $timeBox = $box.find('.half:eq(2)'),
-        dt = new Date(),
-        theHour = dt.getHours(),
-        theMinutes = dt.getMinutes(),
-        tzOffset = (dt.getTimezoneOffset() / 60) + 2,
-        hour = parseInt(hour) - tzOffset,
-        AMorPM = "";
-
-    storage.get("timeFormat", function(format) {
-        // Converts CEST to local on match page.
-        if ($timeBox.length) {
-            var timeInCEST = $timeBox.text().match(/(\d+):(\d+)/);
-            var hour = timeInCEST[1];
-            var minute = timeInCEST[2];
-            hour = hour - tzOffset;
-            hour = (hour < 0) ? 24 + hour : hour;
-
-            if (format === "24h") {
-                $timeBox.text(hour % 24 + ":" + minute + " (" + $timeBox.text() + ")");
-            } else {
-                if (hour == 12) {
-                    AMorPM = "PM";
-                } else if (hour > 12) {
-                    hour = hour - 12;
-                    AMorPM = "PM";
-                } else {
-                    AMorPM = "AM";
-                }
-
-                $timeBox.text(hour + ":" + minute + " " + AMorPM + " (" + $timeBox.text() + ")");
-            }
-        }
-
-        // Shows times on front page.
-
-
-        $boxes = $(".whenm:nth-child(1)");
-        if ($boxes.length) {
-            $boxes.each(function(i) {
-                var timeText = $(this).text();
-                if (timeText.match(/day/))
-                    return 0;
-                var offset = timeText.match(/\d+/)[0];
-                var isFuture = timeText.match("ago") > 0 ? -1 : 1;
-
-                if (timeText.match(/hour/))
-                    var gameTime = new Date(dt.getTime() + (offset * 3600000 * isFuture));
-                else
-                    var gameTime = new Date(dt.getTime() + (offset * 60000 * isFuture));
-
-                var gameHour = gameTime.getHours();
-                var gameMinute = gameTime.getMinutes();
-
-                if ($(this).text().match(/hour/)) {
-                    if (theMinutes > 30) gameHour = gameHour + 1;
-                    gameMinute = "00";
-                } else {
-                    gameMinute = (gameMinute === 0) ? "00" : gameMinute;
-                }
-                if (format === "24h") {
-                    $(this).find(".la-time-match").text(" (" + gameHour + ":" + gameMinute + ")");
-                } else {
-                    AMorPM = (gameHour >= 12) ? "PM" : "AM";
-                    gameHour = (gameHour > 12) ? gameHour - 12 : gameHour;
-
-                    $(this).find(".la-time-match").text(" (" + gameHour + ":" + gameMinute + " " + AMorPM + ")");
-                }
-            });
-        }
-    });
-}
-
-
-function displayAllValue() {
-    var totalValue = 0.0;
-
-    var itemsCount = {
-        'Covert': 0.0,
-        'Classified': 0.0,
-        'Restricted': 0.0,
-        'Mil-Spec': 0.0,
-        'Industrial': 0.0,
-        'Consumer': 0.0,
-        'Other': 0.0
-    };
-
-    if ($("#backpack").length && $(".la-total-value-div").length == 0) {
-        $("#backpack > .item").each(function() {
-            var type = $(this).children("div.rarity")[0].classList[1];
-            var value = parseFloat($(this).children("div.value")[0].innerHTML.replace("$ ", ""));
-
-            if (type in itemsCount)
-                itemsCount[type] += value;
-            else
-                itemsCount['Other'] += value;
-            totalValue += value;
-        });
-
-        var totalValue = totalValue.toFixed(2);
-        var small = (.05 * totalValue).toFixed(2);
-        var medium = (.1 * totalValue).toFixed(2);
-        var large = (.2 * totalValue).toFixed(2);
-
-        $(".bpheader").after(
-            $("<div>").attr("class", "la-total-value-div")
-            .append($("<div>").attr("class", "la-total-value").text("Your items are worth: $")
-                .append($("<strong>")).append(totalValue)
-                .append($("<table>").attr("class", "la-total-value-items"))
-                .append($("<table>").attr("class", "la-total-value-betsize"))
-                .append($("<tr>")
-                    .append($("<td>").text("Small bet : $" + small))
-                    .append($("<td>").text("Medium bet : $" + medium))
-                    .append($("<td>").text("Large bet : $" + large))
-                )
-            )
-        );
-
-        var idx = 0;
-        $.each(itemsCount, function(key, value) {
-            if (idx % 2 == 0) $(".la-total-value-items").append($("<tr>"));
-
-            $(".la-total-value-items tr:last-child").append($("<td>").append(
-                $("<b>").css("color", colors[key]).text(key)
-            ).append(" : $" + value.toFixed(2)));
-
-            idx++;
-        });
-    }
-}
-
-addMenu();
-setBackground();
-addMinimizeButton();
-addTime();
-addInventoryLink();
-displayBotStatus();
-
-
-if (window.location.href.match(/\/match\?m=\d+/)) {
-    addAutoSubmit();
-    $("#placebut").after($("<a>").text("All Value").attr("class", "buttonright la-value-button"));
-    $(".la-value-button").click(displayAllValue);
-}
-
-if (window.location.href.match(/\/myprofile/)) {
-    var winTot = 0.0,
-        lossTot = 0.0,
-        betTot = 0.0;
-
-    var profile = $(".box-shiny-alt div:eq(0)");
-    profile.append("Won: <span id='winnings' style='color:green'></span><br>Lost: <span id='losses' style='color:red'></span><br>Total placed: <span id='placed'></span><br>");
-
-    storage.get('currencyIcon', function(icon) {
-        var decsep = ".",
-            thousep = ",";
-
-        if (icon === "€") {
-            decsep = ",";
-            thousep = "."
-        }
-
-        $.get(baseUrl + "/ajax/betHistory.php", function(data) {
-            $(data).find("tr:not([class^='details'])").each(function() {
-                var won = $(this).find(".won").length > 0;
-
-                $(this).next().find(".item").each(function() {
-                    var itemName = $(this).find(".smallimg").first().attr("alt");
-                    GetPrice(itemName, function(price) {
-                        if (!price) return;
-                        console.log(price);
-                        price = price.replace(/\&\#?.+;/g, "");
-                        console.log(price);
-                        var real = accounting.unformat(price, decsep);
-
-                        betTot += real;
-                        if (!won) {
-                            lossTot += real;
-                        }
-                        profile.find("#losses").html(accounting.formatMoney(lossTot, icon, 2, thousep, decsep));
-                        profile.find("#placed").html(accounting.formatMoney(betTot, icon, 2, thousep, decsep));
-                    });
-                });
-
-                if (won) {
-                    $(this).next().next().find(".item").each(function() {
-                        var itemName = $(this).find(".smallimg").first().attr("alt");
-                        GetPrice(itemName, function(price) {
-                            if (!price) return;
-                            price = price.replace(/\&\#?.+;/g, "");
-                            var real = accounting.unformat(price, decsep);
-
-                            winTot += real;
-                            profile.find("#winnings").html(accounting.formatMoney(winTot, icon, 2, thousep, decsep));
+function startObserver(page) {
+    var observer = new MutationObserver(function(mutations) {
+        var self = this;
+        mutations.forEach(function(mutation) {
+            var newNodes = mutation.addedNodes;
+            if (newNodes !== null && newNodes.length > 0) {
+                $.each(newNodes, function(idx, n) {
+                    if (n.nodeName != "#text") {
+                        self.disconnect();
+                        page.updateItems();
+                        self.observe(document.body, {
+                            childList: true,
+                            subtree: true,
+                            characterData: true
                         });
-                    });
-                }
-            });
+                        return false;
+                    }
+                });
+            }
         });
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true
     });
 }
 
-if (isLogged) {
-    winLoss();
-    trade();
+
+function main(user) {
+    var basePage = new BasePage(user);
+    var page = basePage.getPage()
+    page.init();
+
+    $("#modalPreview").append($("<a>").attr({
+        'id': 'modalMarket',
+        'class': 'button',
+        'href': '#'
+    }).text('Market'));
+
+    if (isLogged) {
+        trade();
+    }
+    startObserver(page);
 }
 
-UpdateItem();
-startObserver();
+
+var user = new User();
+user.loadSettings(main);

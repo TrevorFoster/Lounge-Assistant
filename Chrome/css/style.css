@@ -1,543 +1,274 @@
-/*######################################################################*/
-/* MODAL */
-/*######################################################################*/
-html{
-    font-family: 'Proxima Nova Regular', 'Helvetica Neue', Arial, Helvetica, sans-serif !important;
+.la-minimize-match, .la-minimize-all, .la-maximize-all{
+    color: #FF8A00;
+    text-shadow: rgb(0, 0, 0) 0px 0px 2px;
+    font-weight: bold;
+    font-size: 24px;
+    text-align: center;
+    margin-right: 5px;
 }
-#modalPreview {
-    background-image : radial-gradient(at 50% 50%, rgba(193, 193, 193, 0.952941) 0%, rgba(109, 109, 109, 0.8) 90%) !important;
-    box-shadow : 2px 2px 6px 2px #000 !important;
-}
-
-/*######################################################################*/
-/* ITEMS */
-/*######################################################################*/
 
 .name {
-    border : 0.5px solid #FFF !important;
+    border : 1px solid #FFF !important;
     background-image : radial-gradient(at 50% 50%, rgb(86, 86, 86) 0%, rgb(56, 56, 56)) !important;
     color: rgb(187, 187, 187) !important;
     border-color: rgb(102, 102, 102) !important;
     box-shadow: rgba(0, 0, 0, 0.498039) 0px 0px 5px 0px !important;
-    margin-top: 10px  !important;
+    margin-top: 80%  !important;
+    z-index: 5 !important;
+    top: auto !important;
 }
 
 
-.rarity{
-    color : white !important;
-    text-shadow : rgb(0, 0, 0) 1px 1px 0px !important;
-    box-shadow : rgba(0, 0, 0, 0.9) 0px 2px 15px 0px inset !important;
-    margin-top : -5px !important;
-    border-radius : 0 !important;
-    height : 10px !important;
-}
-
-.item{
-    margin: 2px  !important;
-    cursor: pointer  !important;
-}
-
-/*######################################################################*/
-/* MAIN PAGE */
-/*######################################################################*/
-
-.title{
-    position: relative !important;
-    margin-bottom: -20px !important;
-    font-size: 24px !important;
-    height: 40px !important;
-}
-
-.box  {
-    background-color: rgba(45, 45, 45, 0.7) !important;
-    width: 48% !important;
-    height: auto  !important;
-    border: 1px solid black  !important;
-    color: rgb(187, 187, 187)  !important;
-    padding-bottom: 20px  !important;
-}
-#submenu {
-    border-top: 1px solid black;
+.oitm>.name{
     position: absolute;
-    left : 0;
-    top : 73px;
-    border-right : 1px solid #000 !important;
-    min-height: 100% !important;
-    background: #313131 !important;
-    background-position : center  15px !important;
-    float: left !important;
-    transition:margin-left 500ms;
-    z-index: 100;
 }
 
-#submenu>div{
-
+#modalPreview{
+    z-index:6 !important;
 }
 
-#main {
-    margin-right: 0px  !important;
-    margin-left : 200px;
-    transition:margin-left 500ms;
-}
-main {
-    margin-right: 0px  !important;
-    margin-left : 200px;
-    transition:margin-left 500ms;
+#la-submitmsg{
+    margin: 5px;
+    color : #FF8A00;
+    text-shadow : rgb(0, 0, 0) 1px 1px 0px !important;
 }
 
-.left, .right {
-    background-color: rgba(35, 35, 35, 0.7)  !important;
-    border: solid 1px black  !important;
-    border-radius: 0  !important;
-    width: 47%  !important;
-    padding: 2px !important;
-}
-
-body {
-/*    background-repeat : no-repeat !important;*/
-    background-position : center top !important;
-    background-color : #000 !important;
-    background-image: none !important ;
-    background-color: #000 !important;
+.la-autoplace{
+    margin: 5px;
 }
 
 
+.la-minimize-match:hover, .la-minimize-all:hover, .la-maximize-all:hover{
+    color: #FFAA20;
+}
+.la-match-info{
+    margin-top:5px;
+    margin-left: 24px;
+}
 
-/*######################################################################*/
-/* TRADE */
-/*######################################################################*/
+.la-match-info>b{
+    color: #FF8A00;
+    font-size : 16px;
+    margin-right: 10px;
+}
 
+.la-match-info>i{
+    color: lightgrey;
+    font-size : 14px;
+    margin-right: 10px;
+}
 
-.tradeheader {
-    background: none  !important;
-    background-image: radial-gradient(at 50% 0%, rgba(122, 122, 122, 0.3) 0%, rgba(41, 41, 41, 0) 65%)  !important;
+.la-vs{
+    color: grey;
+    margin-right:10px;
+}
+
+body{
+    background : black !important;
+    width:100%;
+    height: 100%;
+}
+
+.box{
+    background-color: rgba(45, 45, 45, 0.7) !important;
+    border: 1px solid black !important;
+    box-sizing: border-box;
+    width: 49% !important;
+    color : rgb(151, 151, 151) !important;
+
 }
 
 
-.tradeheader>a {
+main{
+    padding-left: 200px;
+    padding-right: 0 !important;
+    background-color: pink !important;
+    margin-right: 0 !important;
+    transition: padding-left 500ms;
+}
+
+
+.left, .right{
+    background-color: rgba(45, 45, 45, 0.7) !important;
+    border: 1px solid black;
+    box-sizing: border-box;
+    border-radius: 0 !important;
+    padding : 5px;
+    width: 48% !important;
+    max-width: none !important;
+}
+
+.tradeheader, .matchheader, .betheader, .bpheader{
+    background-image: radial-gradient(at 50% 0%, rgba(122, 122, 122, 0.3) 0%, rgba(41, 41, 41, 0) 65%) !important;
+}
+
+
+.tradeheader>a, .matchheader>.whenm, .betheader>.user {
     color: #FFF !important;
     text-shadow : rgb(0, 0, 0) 1px 1px 0px !important;
 }
 
-.tradeheader>a>span.user>b {
+.tradeheader>a>span.user>b, .bpheader {
     color: #888 !important;
 }
 
-#satrade{
-    background: none !important;
+.betheader>.user>b {
+    color: #888 !important;
 }
 
-.tradepoll {
-    margin-bottom: auto  !important;
-    width: 98%  !important;
+.betheader{
+    margin-bottom: 5px !important;
 }
+
+.winsorloses{
+    background-color: rgba(45, 45, 45, 0.7) !important;
+    border: 1px solid black;
+    box-sizing: border-box;
+    border-radius: 0 !important;
+    box-shadow: rgba(0, 0, 0, 0.298039) 1px 1px 1px 0px;
+}
+
+.item{
+    background-image: radial-gradient(at 40% 40%, rgb(63, 63, 63) 0%, rgb(41, 41, 41) 80%) !important;
+    border-radius : 0px !important;
+    border: 1px solid transparent !important;
+    border-width: 1px !Important;
+    box-sizing: border-box;
+    position: static !important;
+    line-height:auto !important;
+    display: block !Important;
+    left: auto !Important;
+    float: left !Important;
+    width: 100%;
+}
+
+.value{
+    right: auto !Important;
+    width: 98% !Important;
+    left: auto !important;
+    top: auto !Important;
+    padding: 0!important;
+    box-sizing: border-box;
+    border-radius: 0 !Important;
+    color: black !Important;
+    font-size: .6rem !important;
+    z-index : 1 !important;
+}
+.smallimg{
+    max-width: none !Important;
+    margin: 0!important;
+    width : 100% !important;
+}
+.winsorloses{
+    padding-bottom: 5px !important;
+}
+
+
+.oitm{
+    border: 1px solid black;
+    border-radius: 0 !Important;
+    box-sizing: border-box;
+    width: 24% !important;
+    height: auto !important;
+    margin: 0.5% !important;
+    margin-bottom : 0!important;
+
+}
+
+.rarity{
+    font-family: 'Proxima Nova Regular', 'Helvetica Neue', Arial, Helvetica, sans-serif !important;
+    color : white !important;
+    border-radius : 0 !important;
+    margin-top: -4px !important;
+    height: 14px !important;
+    padding: 0px 0 1px 0 !important;
+    position: static !important;
+    box-shadow : rgba(0, 0, 0, 0.9) 0px 2px 15px 0px inset !Important;
+    text-shadow : rgb(0, 0, 0) 1px 1px 0px !important;
+}
+
 
 div.tradecnt {
     background-size: 2% auto !important
 }
-.item {
-    height: auto  !important;
-    width: 23% !important;
-    background-image: radial-gradient(at 40% 40%, rgb(63, 63, 63) 0%, rgb(41, 41, 41) 80%)  !important;
-    border: 1px solid black  !important;
-    margin: 2px !important;
-}
 
-/*######################################################################*/
-/* MATCH */
-/*######################################################################*/
-
-
-.matchheader {
-    background: none  !important;
-    background-image: radial-gradient(at 50% 0%, rgba(122, 122, 122, 0.3) 0%, rgba(41, 41, 41, 0) 65%)  !important;
-}
-
-.whenm {
-    color: white  !important;
-    text-shadow : none  !important;
-    font-weight: bold  !important;
-}
-
-.whenm:nth-child(1){
-    width: 75% !important;
-}
-
-.whenm:nth-child(2){
-    width: 25% !important;
-}
-
-.winsorloses {
-    margin-left: 25%  !important;
-    background: #313131  !important;
-    border: solid 1px black  !important;
-    border-radius: 0  !important;
-    margin-right: 5px !important;
-}
-
-#bets>.matchmain>.match{
-    opacity:1;
-    background-color: #BBB  !important;
-}
-
-.notaviable{
-    opacity: 0.5 !important;
-}
-.match{
-    background-color: rgba(35, 35, 35, 0.7) !important;
-}
-/*######################################################################*/
-/* BUTTON */
-/*######################################################################*/
-
-
-.simplePagerNav>li>a, a.buttonright, a.button, .full>.button, .half>.buttonright {
-    background : linear-gradient(to bottom, #FFF 5%, #D1D1D1 100%) !important; 
-    box-shadow: rgb(0, 0, 0) 0px 0px 4px 0px !important;
-    color : #555 !important;
-    text-shadow : 0px 1px 0px #FFF !important;
-    font-weight : bold  !important;
-    font-size : 16px !important;
-}
-
-a.buttonright:hover, a.button:hover{
-    color: #000 !important;
-}
-
-
-/*######################################################################*/
-/* PROFILE */
-/*######################################################################*/
-
-#reputation-plus, #reputation-minus{
-    width: 200px !Important;
-    background: #b2b2b2 !important;
-    background-image: linear-gradient(#3F3F3F 0%, #262626 100%) !important;
-    box-shadow: rgb(0, 0, 0) 0px 0px 4px 0px !important;
-}
-
-.box-shiny-alt, .box-shiny, #ajaxCont{
-    background-color: none !important;
-    background-image : none !important;
-    color: rgb(187, 187, 187) !important;
-    border: none !important;
-    box-shadow : none !important;
-    border-radius : 0 !important;
-}
-
-.box-shiny-alt>div>h1{
-   color : rgb(255, 138, 0) !important;
-   text-shadow : none !important;
-   font-weight : bold !important;
-}
-
-.box-shiny-alt>div>a{
-    color : rgb(255, 138, 0) !important;
-    text-shadow : none !important;
-    font-weight : bold !important;
-}
-
-.selectbox{
-    background-color: rgb(63, 63, 63) !important;
-    color: rgb(187, 187, 187) !important;
-    box-shadow: rgba(0, 0, 0, 0.6) 0px 0px 3px 0px inset !important;
-    border : 1px solid !important;
-    border-radius : 3px !important;
-    border-color: rgb(17, 17, 17) !important;
-}
-/*######################################################################*/
-/* BET HISTORY */
-/*######################################################################*/
-
-
-tbody {
-    display: table-row-group;
-    vertical-align: middle;
-    border-color: inherit;
-}
-
-tr {
-    background: transparent;
-    border-top: 1px solid rgb(51, 51, 51);
-    border-bottom: 1px solid rgb(37, 37, 37);
-    font-weight: bold ;
-    height: 27px;
-}
-
-tr>td>a{
-    color: rgb(255, 138, 0);
-}
-tr:nth-child(odd) {
-    background-color: rgba(0, 0, 0, 0.15)!important;
-
-}
-tr:nth-child(even) {
-    background-color: rgba(0, 0, 0, 0) !important;
-}
-
-.won, .lost{
-    text-shadow: rgb(0, 0, 0) 0px 0px 5px !important;
-    background-color : rgba(0, 0, 0, 0.5);
-    padding-bottom: 3px;
-    padding-left: 8px;
-    padding-right: 8px;
-    padding-top: 3px;
-    border-radius : 3px;
-    widt : auto;
-}
-
-.won{
-    color: rgb(142, 193, 62);
-}
-
-.lost{
-    color: rgb(209, 33, 33);
-}
-
-/*######################################################################*/
-/* MY BET */
-/*######################################################################*/
-
-.bpheader{
-    background-color: rgba(0, 0, 0, 0) !important;
-    background-image: radial-gradient(at 50% 0%, rgba(122, 122, 122, 0.298039) 0%, rgba(41, 41, 41, 0) 65%) !important;
-    color: rgb(255, 255, 255) !important;
-    font-size: 16px;
-    font-weight: bold;
-    height: 15px;
-}
-
-
-.match{
-    border: solid 1px black;
-    box-shadow: rgb(47, 47, 48) 1px 1px 0px 0px;
-    color: rgb(187, 187, 187) !important;
-}
-
-.match>.half>a>span{
-    color: rgb(255, 138, 0);
-    font-weight: bold;
-}
-
-.match>.full>span{
-    display:none;
-}
-
-.potwin.Value{
-    float: right;
-    font-size : 24px;
-    font-weight: bold;
-    padding: 5px;
-    background-color: rgb(17, 17, 17);
-}
-
-
-#teamA, #teamB{
-    font-size: 24px;
-    text-shadow : 0 0 15px rgba(255, 255, 255, 0.5) !important;
-    pre
-}
-
-#teamA::before , #teamB::before {
-    content: "$";
-}
-
-
-/*######################################################################*/
-/* TRADE */
-/*######################################################################*/
-
-.tradeheader>.button{
-    float: right !important;
-}
-
-
-#notes{
-    background: rgba(255, 255, 255, 0.2) !important;
-}
-
-.message{
-    background : none  !important;
-    box-shadow: none !important;
-}
-
-.user>b{
-    font-weight : bold;
-    font-size : 16px;
-    color : #FF8A00;
-    text-shadow : rgb(0, 0, 0) 1px 1px 0px;
-}
-
-.msgleft{
-    font-weight : bold;
-    color : white !important;
-}
-
-.msgleft>b>.user{
-    color: #888 !important;
-}
-
-#satrade {
-    background-color: rgba(15, 15, 14, 0.36);
-    border: solid 1px black;
-    box-shadow: rgb(47, 47, 48) 1px 1px 0px 0px;
-    color: rgb(187, 187, 187) !important;
-    background-image : none;
-}
-.tradepoll, .tradecnt{
-    color: rgb(187, 187, 187) !important;
-    background-size: 5% auto !important;
-    width: 98%;
-}
-
-.tradepoll>form.left, .tradepoll>form.right, {
-    min-height: 150px;
-    width: 45%;
-    box-shadow: rgb(47, 47, 48) 1px 1px 0px 0px;
-}
-
-.tradecnt>.left, .tradecnt>.right{
-    width: 47% !Important;
+.tab{
+    background-color : rgb(20, 20, 20) !important;
+    color : rgb(120, 120, 120) !important;
 }
 
 .tabholder{
-    width: 100% !important;
-    margin-left: 0px !important;
+        border-radius: 0 !important;
 }
 
-.tabholder > .tab{
-    background-color: black;
-    color : white;
-    border-bottom-right-radius: 5px !important;
-    border-bottom-left-radius: 5px !important;
+.tradepoll{
+    background-size: 2% auto !important
 }
 
-
-
-.menuAssistant>b{
-    font-size: 16px;
-    font-weight : bold;
-    text-align: center;
-    cursor : default;
-    text-shadow : rgb(0, 0, 0) 1px 1px 0px;
-
+.name,.opts,.infobox {
+    display:none;
+    position:absolute;
 }
 
-
-
-#modalAssistant {
-    z-index: 1;
-    display: none;
-    position: fixed;
-    top: 20%;
-    left: 25%;
-    border-radius: 10px;
-    box-shadow: #000 1px 1px 3px 1px;
-    background-color: #555;
+.clreff{
+    color: #000 !important;
+    text-shadow: none !Important;
+    z-index: 2 !Important;
+    height: 16px;
+    box-sizing: border-box;
+    border-image-width: 0 !Important;
+    margin-right: -1px;
 }
 
-#modalCnt{
-    padding: 50px;
-}
-
-
-tr:nth-child(odd) {
-    background-color: rgba(0, 0, 0, 0.15)!important;
-}
-tr:nth-child(even) {
-    background-color: rgba(0, 0, 0, 0) !important;
-}
-tr {
-    color: rgb(187, 187, 187);
-}
-
-th {
-    width: 150px;
-    background-color: rgba(0, 0, 0, 1);
-}
-
-#modalCnt>table>tbody>tr>td{
-    text-align:center;
-}
-
-#modalAssistant>a{
-    z-index:100;
-}
-
-
-
-.currencyList{
-    margin-left: 20px;
-    background-image: radial-gradient(at 50% 0%, rgba(122, 122, 122, 0.3) 0%, rgba(41, 41, 41, 0) 65%);
-    border : none;
-}
-
-
-.standard{
-    color: rgb(187, 187, 187) !important;
-}
-
-.currencydiv{
-    padding: 8px 0px 8px 10px;
-    border: medium none;
-    border-top: 1px solid #333;
-    border-bottom: 1px solid #252525;
-    float: right !important;
-    width: 190px;
-    background: none repeat scroll 0% 0% #2d2d2d;
-    color: #FF8A00;
-    margin-top: 0 !important;
-}
-
-.currencydiv>span{
-    margin-left: 0 !important;
-}
-
-.matchleft{
+.la-clreff{
+    font-family: 'Proxima Nova Regular', 'Helvetica Neue', Arial, Helvetica, sans-serif !important;
+    background-color: rgb(129, 129, 129);
+    font-size:.6em;
+    padding:1px 2px;
+    float:right;
+    height: 16px;
+    margin-bottom: -16px;
+    border-radius:0 0 0 6px;
+    box-sizing: border-box;
     position: relative;
-}
-
-.la-bof{
-    color : #00000;
-}
-
-
-#modalMarket{
-    background-image: linear-gradient(#3F3F3F 0%, #262626 100%);
-    box-shadow: #000 0px 0px 4px 0px;
-    color: #C7C7C7;
-    padding:5px;
-    text-shadow: #000 1px 1px 0px;
-    font-size: 16px;
-    font-weight: 700;
-}
-
-.notification{
-    color : black;
-    text-shadow: none;
+    right: 0;
+    color:#000;
+    z-index:2;
 }
 
 
-.winning>b{
-    color: #76EE00;
+.box-shiny-alt, .box-shiny, #satrade, .gradient, .message{
+    background-color: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    color : white;
 }
-.loosing>b{
-    color: #FF0000;
+
+.box-shiny-alt h1{
+    color: #888 !important;
+    text-shadow : rgb(0, 0, 0) 1px 1px 0px !important;
+}
+
+
+.box-shiny-alt a{
+    color: rgb(255, 138, 0) !important;
+    text-shadow : rgb(0, 0, 0) 1px 1px 0px !important;
 }
 
 
-.botstatus{
-    height: 11px;
+a.buttonright, a.button{
+    background-image: radial-gradient(at 40% 40%, rgb(93, 93, 93) 0%, rgb(61, 61, 61) 80%) !important;
+    color : #ccc !important;
+    text-shadow: #000 1px 1px 0px !important;
 }
 
-.profilesmallheader> a{
-    color : #FF8A00;
-    text-shadow: #000 1px 1px 0px;
+.Star>.la-clreff{
+    background-color : #8650AC !important;
 }
 
-.boxhistory
-{
-    padding:10px;
+.StatTrak>.la-clreff{
+    background-color : #CF6A32 !important;
 }
 
 .Star{
@@ -650,106 +381,15 @@ th {
     box-shadow: none !important;
 }
 
-#replist>li>a{
-    color : #FFF;
-}
-
-
-#replist>li:nth-child(odd) {
-    background-color: rgba(0, 0, 0, 0.15)!important;
-
-}
-#replist>li:nth-child(even) {
-    background-color: rgba(0, 0, 0, 0) !important;
-}
-
-#bonuses>table>tbody>tr>td{
-    color: #000 !important;
-}
-
-.author>a{
-    color : #FF8A00 !important;
-}
-
-
-#submitmsg{
-    margin: 5px;
-    color : #FF8A00;
-}
-
-.autoplace{
-    margin: 5px;
-}
-
-#modalCntmodal {
-    color : black;
-}
-
-
-.la-bot-status{
-    border-bottom-width: 0;
-}
-
-
-.la-minimize-match, .la-minimize-all, .la-maximize-all{
-    color: #FF8A00;
-    text-shadow: rgb(0, 0, 0) 0px 0px 2px;
-    font-weight: bold;
-    font-size: 24px;
-    text-align: center;
-    margin-right: 5px;
-}
-
-.la-minimize-match:hover, .la-minimize-all:hover, .la-maximize-all:hover{
-    color: #FFAA20;
-}
-.la-match-info{
-    margin-top:5px;
-    margin-left: 24px;
-}
-
-.la-match-info>b{
-    color: #FF8A00;
-    font-size : 16px;
-}
-
-.la-match-info>i{
-    color: grey;
-    font-size : 14px;
-}
-
-
-.la-vs{
-    color: lightgrey;
-    margin-right:10px;
-    margin-left: 10px;
-}
-
-.matchmain{
-    margin-bottom: 2px;
-}
-
-
-span.publisher-anchor-color>a{
-    color: #FF8A00 !important;
-}
-
-
-.la-time-match{
-    margin-left: 10px;
-    font-weight: lighter;
-}
-
-
 
 .la-total-value-div{
+    color : #CCC;
     padding: 10px;
     width:95%;
     margin-bottom: 20px;
 }
 
 .la-total-value{
-    color :rgb(187, 187, 187);
     font-weight: bold;
     text-align: center;
     margin-left:auto;
@@ -765,6 +405,7 @@ span.publisher-anchor-color>a{
 }
 
 .la-total-value-items{
+    color : #CCC;
     margin-left:auto;
     margin-right:auto;
     margin-bottom: 10px;
@@ -794,66 +435,137 @@ span.publisher-anchor-color>a{
     width: 20%;
 }
 
+
+#teamA, #teamB{
+    padding-top : 10px;
+    font-size: 24px;
+    text-shadow : 0 0 15px rgba(255, 255, 255, 0.5) !important;
+}
+
+#teamA::before , #teamB::before {
+    content: "$";
+}
+
+.match a{
+    color: rgb(37, 37, 37) !important;
+    text-shadow : none !important;
+}
+
+a{
+    color: rgb(255, 138, 0) !important;
+    text-shadow : rgb(0, 0, 0) 1px 1px 0px !important;
+}
+.item>.name>a{
+    color: rgb(255, 138, 0) !important;
+    text-shadow : rgb(0, 0, 0) 1px 1px 0px !important;
+}
+
+/*######################################################################*/
+/* BET HISTORY */
+/*######################################################################*/
+
+
+tbody {
+    display: table-row-group;
+    vertical-align: middle;
+    border-color: inherit;
+}
+
+tr {
+    background: transparent;
+    border-top: 1px solid rgb(51, 51, 51);
+    border-bottom: 1px solid rgb(37, 37, 37);
+    font-weight: bold ;
+    height: 27px;
+}
+
+tr>td>a{
+    color: rgb(255, 138, 0);
+}
+tr:nth-child(odd) {
+    background-color: rgba(0, 0, 0, 0.15)!important;
+
+}
+tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0) !important;
+}
+
+.won, .lost{
+    text-shadow: rgb(0, 0, 0) 0px 0px 5px !important;
+    background-color : rgba(0, 0, 0, 0.5);
+    padding-bottom: 3px;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 3px;
+    border-radius : 3px;
+    widt : auto;
+}
+
+.won{
+    color: rgb(142, 193, 62);
+}
+
+.lost{
+    color: rgb(209, 33, 33);
+}
+
+
+
+#submenu.la-display-menu{
+    left: -200px;
+    transition: left 500ms;
+}
+
+
+
 .la-hide-div{
-    position: relative;
-
-    left : 200px;
+    color : #FF8A00;
+    text-shadow : rgb(0, 0, 0) 1px 1px 0px !important;
+    font-weight: bold;
+    font-size: 16px;
+    position: absolute;
+    left: 200px;
     top: 50px;
-    display: block;
-
     background-color: rgb(45, 45, 45);
-    padding-right: 4px;
-
-    float:right;
-
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
     border-right: 1px solid black;
     border-top: 1px solid black;
     border-bottom: 1px solid black;
     z-index: 10;
+    padding-right: 4px;
+    transition: left 500ms;
 }
 
-.la-hide-menu{
-    color : #FF8A00;
-    text-shadow : rgb(0, 0, 0) 1px 1px 0px !important;
-    font-weight: bold;
-    font-size: 16px;
-    margin : auto;
+#submenu{
+    position: absolute;
+    left: 0;
+    top: 73px;
+    width: 10%;
+    transition: left 500ms;
+    z-index : 100;
+    width: 200px;
 }
 
+#main.la-display-menu, main.la-display-menu{
+    padding-left: 0px;
+    transition: padding-left 500ms;
+}
 
-
-#submenu.la-display-menu{
-    margin-left: -200px;
-    transition: margin-left 500ms;
-}
-#main.la-display-menu{
-    margin-left: 0px !important;
-    transition:margin-left 500ms;
-}
-main.la-display-menu{
-    margin-left: 0px !important;
-    transition:margin-left 500ms;
-}
 
 @media screen and (max-width : 1400px) {
     #submenu{
-	margin-left: -200px;
-	transition:margin-left 500ms;
+	left: -200px;
+	transition: left 500ms;
     }
 
-    main{
-	margin-left: 0px;
-	transition:margin-left 500ms;
-    }
-    #main{
-	margin-left: 0px !important;
-	transition:margin-left 500ms;
+    main {
+	padding-left: 0px !important;
+	transition:padding-left 500ms;
     }
 
     #submenu.la-display-menu{
-	margin-left: 0px;
+	left: 0px;
     }
 }
 @media screen and (max-width:87em) {
@@ -864,3 +576,44 @@ main.la-display-menu{
 
 
 
+.title> a{
+    color : rgb(204, 204, 204) !important;
+}
+
+#bonuses>table>tbody>tr>td{
+    color: #000 !important;
+}
+
+#reputation-plus, #reputation-minus{
+    width: 200px !Important;
+    background: #b2b2b2 !important;
+    background-image: linear-gradient(#3F3F3F 0%, #262626 100%) !important;
+    box-shadow: rgb(0, 0, 0) 0px 0px 4px 0px !important;
+}
+
+.match{
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    border: solid 1px black;
+    box-shadow: rgb(47, 47, 48) 1px 1px 0px 0px;
+    color: rgb(187, 187, 187) !important;
+}
+
+.match>.half>a>span{
+    color: rgb(255, 138, 0);
+    font-weight: bold;
+}
+
+.match>.full>span{
+    display:none;
+}
+
+
+#bets>.matchmain>.match{
+    opacity:1;
+    background-color: #BBB  !important;
+}
+
+.notaviable, .notavailable{
+    opacity : 0.5 !important;
+}
