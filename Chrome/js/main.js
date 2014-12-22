@@ -76,6 +76,9 @@ BasePage.prototype.getPage = function() {
         case "/myprofile":
             return new ProfilePage(this.user);
             break;
+        case "/mybets":
+            return new BetsPage(this.user);
+            break;
         case "/":
             return new MainPage(this.user);
             break;
@@ -248,6 +251,22 @@ MainPage.prototype.init = function() {
         match.update();
     });
 
+}
+
+//######################################################################
+// BetsPage
+//######################################################################
+
+var BetsPage = function(user) {
+    this.user = user;
+};
+
+BetsPage.prototype = new BasePage();
+BetsPage.prototype.constructor = BetsPage;
+
+BetsPage.prototype.init = function() {
+    this._init();
+    // Add team logos to the bets
 }
 
 //######################################################################
@@ -866,8 +885,6 @@ function trade() {
         updateTrade();
     });
 }
-
-
 
 
 function startObserver(page) {

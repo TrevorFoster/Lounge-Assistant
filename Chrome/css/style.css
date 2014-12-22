@@ -105,6 +105,9 @@ main {
     border-radius: 0 !important;
     box-shadow: rgba(0, 0, 0, 0.298039) 1px 1px 1px 0px;
 }
+.winsorloses span {
+    color: #CCC;
+}
 .item {
     background-image: radial-gradient(at 40% 40%, rgb(63, 63, 63) 0%, rgb(41, 41, 41) 80%) !important;
     border-radius: 0px !important;
