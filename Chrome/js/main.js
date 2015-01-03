@@ -70,6 +70,7 @@ BasePage.prototype.getPage = function() {
         case "/match":
             return new MatchPage(this.user);
             break;
+        case "/profile":
         case "/trade":
             return new TradePage(this.user);
             break;
@@ -266,7 +267,11 @@ BetsPage.prototype.constructor = BetsPage;
 
 BetsPage.prototype.init = function() {
     this._init();
-    // Add team logos to the bets
+
+    $(".matchmain").each(function() {
+
+        $(".match span:eq(0)", $(this)).prepend("<div class='team' style='margin-left:auto;margin-left:auto;background: url(\"http://cdn.csgolounge.com/img/teams/" + $(".match span:eq(0) b", $(this)).text() + ".jpg\");'>")
+    });
 }
 
 //######################################################################
@@ -475,7 +480,6 @@ ProfilePage.prototype.addTotals = function() {
     profile.append("Won: <span id='winnings' style='color:green'></span><br>Lost: <span id='losses' style='color:red'></span><br>Total placed: <span id='placed'></span><br>");
 
     var icon = user.getSetting("currencyIcon");
-    console.log(icon);
     var decsep = ".",
         thousep = ",";
 
@@ -547,6 +551,38 @@ TradePage.prototype.init = function() {
         $("<a>").attr("href", "http://steamcommunity.com/profiles/" + steamid + "/inventory").text("Inventory")
     );
 
+    var ltot = 0,
+        rtot = 0;
+    $(".tradepoll").after("<span id='lefttot' class='left standard'></span><span id='righttot' class='right standard'></span>");
+    $("#lefttot").html(ltot.toString());
+    $(".tradecnt .left .item").each(function() {
+        getPrice(new Item($(this)), function(price) {
+            if (price) {
+                ltot += accounting.unformat(price);
+                $("#lefttot").html(ltot.toString());
+            }
+        });
+    });
+
+    $("#righttot").html(rtot.toString());
+    $(".tradecnt .right .item").each(function() {
+        getPrice(new Item($(this)), function(price) {
+            if (price) {
+                rtot += accounting.unformat(price);
+                $("#righttot").html(rtot.toString());
+            }
+        });
+    });
+
+    $(".message").each(function() {
+        if ($(this).find(".oitm").length > 0) {
+            var self = $(this);
+            itemsTotal($(this).find(".item"), function(total) {
+                console.log($(this));
+                self.after("<div class='right standard' id='total'>" + total + "</div>");
+            });
+        }
+    });
 }
 
 //######################################################################
@@ -822,6 +858,32 @@ Match.prototype.load = function() {
 }
 
 // ################################################################################
+
+function itemsTotal(items, callback) {
+    var total = 0,
+        totaled = 0,
+        len, i;
+    var icon = user.getSetting("currencyIcon");
+
+    var decsep = ".",
+        thousep = ",";
+
+    if (icon === "€") {
+        decsep = ",";
+        thousep = "."
+    }
+
+    for (i = 0, len = items.length; i < len; i++) {
+        getPrice(new Item(items[i]), function(price) {
+            if (price)
+                total += accounting.unformat(price);
+            totaled++;
+            if (totaled == len) {
+                callback(accounting.formatMoney(total, icon, 2, thousep, decsep));
+            }
+        });
+    }
+}
 
 function getPrice(item, callback) {
     if (item.name in PriceList) {
