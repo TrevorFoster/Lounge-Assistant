@@ -269,8 +269,8 @@ BetsPage.prototype.init = function() {
     this._init();
 
     $(".matchmain").each(function() {
-
-        $(".match span:eq(0)", $(this)).prepend("<div class='team' style='margin-left:auto;margin-left:auto;background: url(\"http://cdn.csgolounge.com/img/teams/" + $(".match span:eq(0) b", $(this)).text() + ".jpg\");'>")
+        $(".match span:eq(0)", $(this)).prepend("<div class='team' style='margin-left:auto;margin-right:auto;background: url(\"http://cdn.csgolounge.com/img/teams/" + $(".match span:eq(0) b", $(this)).text() + ".jpg\");'>");
+        $(".match span:eq(2)", $(this)).prepend("<div class='team' style='margin-left:auto;margin-right:auto;background: url(\"http://cdn.csgolounge.com/img/teams/" + $(".match span:eq(2) b", $(this)).text() + ".jpg\");'>")
     });
 }
 
@@ -551,33 +551,20 @@ TradePage.prototype.init = function() {
         $("<a>").attr("href", "http://steamcommunity.com/profiles/" + steamid + "/inventory").text("Inventory")
     );
 
-    var ltot = 0,
-        rtot = 0;
     $(".tradepoll").after("<span id='lefttot' class='left standard'></span><span id='righttot' class='right standard'></span>");
-    $("#lefttot").html(ltot.toString());
-    $(".tradecnt .left .item").each(function() {
-        getPrice(new Item($(this)), function(price) {
-            if (price) {
-                ltot += accounting.unformat(price);
-                $("#lefttot").html(ltot.toString());
-            }
-        });
+
+    itemTotal($(".tradecnt .left .item"), function(total) {
+        $("#lefttot").html(total);
     });
 
-    $("#righttot").html(rtot.toString());
-    $(".tradecnt .right .item").each(function() {
-        getPrice(new Item($(this)), function(price) {
-            if (price) {
-                rtot += accounting.unformat(price);
-                $("#righttot").html(rtot.toString());
-            }
-        });
+    itemTotal($(".tradecnt .right .item"), function(total) {
+        $("#righttot").html(total);
     });
 
     $(".message").each(function() {
-        if ($(this).find(".oitm").length > 0) {
+        if ($(this).find(".item").length > 0) {
             var self = $(this);
-            itemsTotal($(this).find(".item"), function(total) {
+            itemTotal($(this).find(".item"), function(total) {
                 console.log($(this));
                 self.after("<div class='right standard' id='total'>" + total + "</div>");
             });
@@ -859,7 +846,7 @@ Match.prototype.load = function() {
 
 // ################################################################################
 
-function itemsTotal(items, callback) {
+function itemTotal(items, callback) {
     var total = 0,
         totaled = 0,
         len, i;
